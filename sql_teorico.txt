@@ -1,0 +1,55 @@
+select id_corsa, id_bici, data_corsa, durata_minuti
+from corse
+where id_bici in (
+    select id_bici 
+    from biciclette 
+    where citta = "Milano")
+order by data_corsa DESC;
+SPIEGAZIONE: con la sottoquery isolo le bici di milano così da poter filtrare le corse milanesi e disponendole poi dalla più recente alla meno recente
+
+select citta, count(*) as numero_bici_elettriche
+from biciclette
+where tipo = 'elettrica'
+group by citta
+order by numero_bici_elettriche DESC;
+SPIEGAZIONE: con il where seleziono solo le bici elettriche, raggruppo i risultati per città con il group by, conto quante bici elettriche ci sono con il count e infine ordino le città da quella con più bici elettriche a quella che ne ha di meno
+
+select b.tipo, avg(c.durata_minuti) as durata_media, max(c.durata_minuti) as durata_massima, min(c.durata_minuti) as durata_minima 
+from corse c
+join biciclette b on c.id_bici = b.id_bici
+group by b.tipo;
+SPIEGAZIONE:calcolo i tempi di utilizzo delle corse differenziando il tutto tra bici classiche e elettriche. il group by serve a differenziare i dati in base al tipo e il join per unire la tabella delle corse a quella delle biciclette per poi poter calcolare le varie statistiche
+
+
+select stazione_arrivo, count(*) as arrivi_totali
+from corse
+where data_corse between '2026-04-01' and '2026-04-30' 
+    and stazione_arrivo in ( select nome from stazioni where citta = 'Milano')
+group by stazione_arrivo
+having count(*) > 50
+order by arrivi_totali DESC;
+SPIEGAZIONE: con il between filtro le corse di aprile mentre con la sottoquery isolo le stazioni che si trovano Milano, raggruppo le corse in base a stazione_arrivo e le conto, con l'having vado a scartare le stazioni che hanno avuto meno di 50 arrivi e poi ordino i risultati mostrando prima le stazioni con più rientri
+
+
+select id_utente, nome, totale_corse, totale_chilometri
+from (
+    select u.id_utente, u.nome, count(c.id_corsa) as totale_corse, sum(c.km_percorsi) as totale_chilometri
+    from utenti u
+    join corse c on u.id_utente = c.id_utente
+    where u.tipo_abbonamento = 'Premium'
+    group by u.id_utente, u.nome
+) as riepilogo_utenti
+where totale_corse >= 10;
+SPIEGAZIONE: nella parte interna faccio un join tra le corse e gli utenti selezionando solo chi ha il profilo premium, poi raggruppoper utente e calcolo totale dei viaggi fatti e somma dei km accumulati. nella parte esterna mostro i risultati della sottoquery scartando chi ha fatto mendo di 10 corse totali 
+
+
+
+
+
+
+la sesta query mostra quante corse arrivano e quante partono per ogni stazione e poi calcola il bilancio tra i due valori.
+i due count contano partenze e arrivi, con i due left join vengono incluse le stazioni senza corse associate, con il group by i dati vengono raggruppati per stazione e città, l'order by ordina infine le stazioni dalla più "in attivo" alla più "in passivo"
+in caso di :
+-bilancio = 0 -> arrivi e partenze sono uguali
+-bilancio > 0 -> più arrivi che partenze
+-bilancio < 0 -> più partenze che arrivi
